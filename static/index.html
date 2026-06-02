@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. Swarm HUD Dashboard</title>
+    <!-- Modern high-tech typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="hud-container">
+        <!-- TOP HUD STATUS HEADER -->
+        <header class="hud-header">
+            <div class="header-logo">
+                <div class="glow-dot"></div>
+                <h1>J.A.R.V.I.S. <span>SWARM SYSTEM v3.0</span></h1>
+                <div class="hud-telemetry-header">
+                    <span>SYS_STAT: <span class="active-text">[ONLINE]</span></span>
+                    <span>// LINK_TYPE: SECURE_LOCAL</span>
+                    <span>// MATRIX_COORDS: 45.092.A // ELEV: 114M</span>
+                </div>
+            </div>
+            <div class="header-time-container">
+                <span id="hud-date">TUESDAY, JUNE 02, 2026</span>
+                <span id="hud-time">09:30 AM</span>
+            </div>
+        </header>
+
+        <div class="hud-grid">
+            <!-- LEFT PANEL: SWARM STATUS & VISUAL WAVE -->
+            <div class="hud-panel left-panel">
+                <div class="panel-header">
+                    <h2>SYNAPTIC NERVOUS SWARM</h2>
+                </div>
+                
+                <!-- Swarm Debate Actors status -->
+                <div class="swarm-actors">
+                    <div class="actor-card active" id="actor-orchestrator">
+                        <div class="actor-indicator"></div>
+                        <div class="actor-info">
+                            <h3>ORCHESTRATOR</h3>
+                            <p>Local Brain Core (Active)</p>
+                        </div>
+                    </div>
+                    <div class="actor-card" id="actor-engineer">
+                        <div class="actor-indicator"></div>
+                        <div class="actor-info">
+                            <h3>SWARM ENGINEER</h3>
+                            <p>Dynamic Code Writer (Standby)</p>
+                        </div>
+                    </div>
+                    <div class="actor-card" id="actor-critic">
+                        <div class="actor-indicator"></div>
+                        <div class="actor-info">
+                            <h3>CODE CRITIC</h3>
+                            <p>Syntax Sandbox Tester (Standby)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stark Holographic Arc Core -->
+                <div class="neural-core-container">
+                    <div class="arc-core">
+                        <svg viewBox="0 0 100 100" class="arc-reactor" data-status="standby">
+                            <!-- Outer rotating dashed ring -->
+                            <circle cx="50" cy="50" r="46" stroke="rgba(0, 240, 255, 0.15)" stroke-width="1.2" fill="none" stroke-dasharray="4, 4" class="ring-dashed" />
+                            <!-- Rotating outer segment ring -->
+                            <circle cx="50" cy="50" r="41" stroke="var(--glow-cyan)" stroke-width="2" fill="none" stroke-dasharray="25, 8, 12, 6" class="ring-outer" />
+                            <!-- Counter-rotating middle segment ring -->
+                            <circle cx="50" cy="50" r="33" stroke="var(--glow-orange)" stroke-width="1.8" fill="none" stroke-dasharray="15, 10, 5, 5" class="ring-middle" />
+                            <!-- Static target crosshairs -->
+                            <line x1="50" y1="5" x2="50" y2="15" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1" />
+                            <line x1="50" y1="85" x2="50" y2="95" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1" />
+                            <line x1="5" y1="50" x2="15" y2="50" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1" />
+                            <line x1="85" y1="50" x2="95" y2="50" stroke="rgba(0, 240, 255, 0.4)" stroke-width="1" />
+                            <!-- Inner pulsing audio ring -->
+                            <circle cx="50" cy="50" r="23" stroke="var(--glow-cyan)" stroke-width="1" fill="none" stroke-dasharray="3, 3" class="ring-inner" />
+                            <!-- Center mind orb -->
+                            <circle cx="50" cy="50" r="12" fill="url(#core-gradient)" class="core-center" />
+                            
+                            <defs>
+                                <radialGradient id="core-gradient" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#fff" />
+                                    <stop offset="30%" stop-color="var(--glow-cyan)" />
+                                    <stop offset="70%" stop-color="rgba(0, 240, 255, 0.2)" />
+                                    <stop offset="100%" stop-color="rgba(0, 240, 255, 0)" />
+                                </radialGradient>
+                                <radialGradient id="core-gradient-active" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#fff" />
+                                    <stop offset="25%" stop-color="#00f0ff" />
+                                    <stop offset="65%" stop-color="rgba(0, 240, 255, 0.5)" />
+                                    <stop offset="100%" stop-color="rgba(0, 240, 255, 0)" />
+                                </radialGradient>
+                                <radialGradient id="core-gradient-thinking" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#fff" />
+                                    <stop offset="25%" stop-color="var(--glow-orange)" />
+                                    <stop offset="65%" stop-color="rgba(255, 107, 0, 0.5)" />
+                                    <stop offset="100%" stop-color="rgba(255, 107, 0, 0)" />
+                                </radialGradient>
+                                <radialGradient id="core-gradient-speaking" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#fff" />
+                                    <stop offset="25%" stop-color="#a855f7" />
+                                    <stop offset="65%" stop-color="rgba(168, 85, 247, 0.5)" />
+                                    <stop offset="100%" stop-color="rgba(168, 85, 247, 0)" />
+                                </radialGradient>
+                            </defs>
+                        </svg>
+                        <div class="core-telemetry">
+                            <span class="core-status-text">CORE: STANDBY</span>
+                            <span class="core-frequency">FREQ: 98.2 MHz</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animated Soundwave visualizer -->
+                <div class="soundwave-container" id="soundwave-box">
+                    <div class="soundwave-label">AMBIENT AUDIO MATRIX</div>
+                    <svg id="soundwave" viewBox="0 0 400 100">
+                        <path d="M10,50 L390,50" stroke="#00f0ff" stroke-width="2" fill="none" id="wave-path"></path>
+                    </svg>
+                    <div class="voice-status" id="speaker-status">STANDBY</div>
+                </div>
+            </div>
+
+            <!-- CENTER PANEL: SYSTEM STATUS & REAL-TIME LOG -->
+            <div class="hud-panel center-panel">
+                <div class="panel-header">
+                    <h2>SYSTEM PERFORMANCE TELEMETRY</h2>
+                </div>
+                
+                <!-- System metrics gauges -->
+                <div class="metrics-container">
+                    <div class="gauge-card">
+                        <div class="gauge-label">CPU</div>
+                        <div class="gauge-value" id="cpu-val">0%</div>
+                        <div class="gauge-bar-outer">
+                            <div class="gauge-bar-inner" id="cpu-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="gauge-card">
+                        <div class="gauge-label">RAM</div>
+                        <div class="gauge-value" id="ram-val">0%</div>
+                        <div class="gauge-bar-outer">
+                            <div class="gauge-bar-inner" id="ram-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="gauge-card">
+                        <div class="gauge-label">POWER</div>
+                        <div class="gauge-value" id="battery-val">100%</div>
+                        <div class="gauge-bar-outer">
+                            <div class="gauge-bar-inner" id="battery-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event logger terminal console -->
+                <div class="console-container">
+                    <div class="console-header">
+                        <span>SYSTEM EVENT FEED</span>
+                        <span class="pulse-icon"></span>
+                    </div>
+                    <div class="console-logs" id="console-logs-feed">
+                        <div class="log-entry system">[09:28:21] Neural connections established. JARVIS Swarm online, sir.</div>
+                    </div>
+                </div>
+
+                <!-- Chat controls -->
+                <div class="chat-input-container">
+                    <button id="mic-btn" class="hud-mic-btn" title="Speak to JARVIS">🎤</button>
+                    <input type="text" id="command-input" placeholder="Initiate manual command or speak..." autocomplete="off">
+                    <button id="send-btn">EXECUTE</button>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: LONG-TERM MEMORY & SWARM TOOLS -->
+            <div class="hud-panel right-panel">
+                <!-- Memory Section -->
+                <div class="memory-section">
+                    <div class="panel-header">
+                        <h2>LONG-TERM MEMORY DATABASE</h2>
+                    </div>
+                    <div class="memory-search">
+                        <input type="text" id="memory-search-input" placeholder="Search database keys...">
+                    </div>
+                    <div class="memory-table-container">
+                        <table class="memory-table">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Value</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memory-db-body">
+                                <tr>
+                                    <td colspan="3" class="empty-msg">No memories loaded.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Swarm Dynamic Tools list -->
+                <div class="tools-section">
+                    <div class="panel-header">
+                        <h2>SELF-CREATED DYNAMIC TOOLS</h2>
+                    </div>
+                    <div class="tools-list" id="custom-tools-list">
+                        <div class="tool-item builtin">
+                            <div class="tool-name">request_new_tool (Built-in)</div>
+                            <div class="tool-desc">Trigger Swarm coding & hot-loading.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="app.js"></script>
+</html>
