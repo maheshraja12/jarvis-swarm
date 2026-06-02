@@ -1,5 +1,10 @@
 // J.A.R.V.I.S. Swarm HUD Dashboard JS Controller
 
+// Determine the API base URL. If hosted on a third-party domain like Vercel, connect to the local JARVIS API.
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? '' 
+    : 'http://127.0.0.1:8000';
+
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Clock Telemetry Loop
     updateClock();
@@ -52,7 +57,7 @@ function updateClock() {
 let currentStatus = "STANDBY";
 async function pollSystemStatus() {
     try {
-        const response = await fetch("/api/status");
+        const response = await fetch(`${API_BASE}/api/status`);
         if (!response.ok) return;
         
         const data = await response.json();
@@ -144,7 +149,7 @@ async function executeCommand() {
     appendLog(cmd, "user");
     
     try {
-        const response = await fetch("/api/command", {
+        const response = await fetch(`${API_BASE}/api/command`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ command: cmd })
@@ -186,7 +191,7 @@ function appendLog(text, type) {
 let localMemories = [];
 async function loadMemories() {
     try {
-        const response = await fetch("/api/memory");
+        const response = await fetch(`${API_BASE}/api/memory`);
         if (!response.ok) return;
         
         const data = await response.json();
@@ -234,7 +239,7 @@ function renderMemoryTable(memList) {
 async function deleteMemory(key) {
     if (!confirm(`Confirm deletion of memory fact for '${key}'?`)) return;
     try {
-        const response = await fetch(`/api/memory/${encodeURIComponent(key)}`, {
+        const response = await fetch(`${API_BASE}/api/memory/${encodeURIComponent(key)}`, {
             method: "DELETE"
         });
         if (response.ok) {
@@ -259,7 +264,7 @@ function filterMemories() {
 // TOOLS LIST MANAGEMENT
 async function loadTools() {
     try {
-        const response = await fetch("/api/tools");
+        const response = await fetch(`${API_BASE}/api/tools`);
         if (!response.ok) return;
         
         const data = await response.json();
