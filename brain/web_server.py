@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import sys
@@ -13,6 +14,15 @@ from brain.agent import JarvisAgent
 from brain.memory import JarvisMemory
 
 app = FastAPI(title="J.A.R.V.I.S. Swarm API")
+
+# Add CORS Middleware to allow cross-origin requests (e.g. from Vercel dashboard deployments)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Mount Static Files to serve the HUD frontend
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
