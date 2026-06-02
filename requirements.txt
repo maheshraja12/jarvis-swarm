@@ -1,0 +1,16 @@
+requests>=2.31.0
+pyttsx3>=2.90
+edge-tts>=6.1.9
+pyautogui>=0.9.54
+pygetwindow>=0.0.9
+psutil>=5.9.8
+keyboard>=0.13.5
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.26.0
+SpeechRecognition>=3.16.1
+audioop-lts>=0.2.2
+standard-aifc>=3.13.0
+standard-chunk>=3.13.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
