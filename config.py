@@ -60,4 +60,4 @@ VISUAL_BUFFER_LIMIT = 5
 
 # 11. Web HUD Dashboard Settings
 # Set to True to enable the dashboard HUD at port 8000, or False for an invisible background voice mode.
-ENABLE_WEB_SERVER = False
+ENABLE_WEB_SERVER = True
