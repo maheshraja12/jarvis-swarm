@@ -63,7 +63,7 @@ def _is_loopback(request: Request) -> bool:
 @app.middleware("http")
 async def protect_sensitive_routes(request: Request, call_next):
     path = request.url.path
-    sensitive = path == "/api/command" or path == "/api/memory" or path.startswith("/api/memory/")
+    sensitive = path.startswith("/api/")
     if sensitive and request.method in {"GET", "POST", "DELETE", "PUT", "PATCH"}:
         expected = os.getenv("JARVIS_API_TOKEN", "").strip()
         supplied = request.headers.get("X-JARVIS-Token", "")
