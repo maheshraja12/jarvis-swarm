@@ -67,16 +67,16 @@ async def protect_sensitive_routes(request: Request, call_next):
     if sensitive and request.method in {"GET", "POST", "DELETE", "PUT", "PATCH"}:
         expected = os.getenv("JARVIS_API_TOKEN", "").strip()
         supplied = request.headers.get("X-JARVIS-Token", "")
-        if expected:
+        if not _is_loopback(request):
+            if not expected:
+                from starlette.responses import JSONResponse
+                return JSONResponse(
+                    status_code=503,
+                    content={"detail": "Remote access to this endpoint is disabled until JARVIS_API_TOKEN is configured"},
+                )
             if not supplied or not hmac.compare_digest(supplied, expected):
                 from starlette.responses import JSONResponse
                 return JSONResponse(status_code=401, content={"detail": "Valid X-JARVIS-Token header required"})
-        elif not _is_loopback(request):
-            from starlette.responses import JSONResponse
-            return JSONResponse(
-                status_code=503,
-                content={"detail": "Remote access to this endpoint is disabled until JARVIS_API_TOKEN is configured"},
-            )
     return await call_next(request)
 
 
