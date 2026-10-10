@@ -13,8 +13,8 @@ The built-in server binds to loopback by default. Keep it local unless you have 
 
 ## API security
 
-- `/api/command`, `/api/memory`, and `/api/memory/{key}` are sensitive because they can trigger agent actions or expose/delete stored memories.
-- Loopback requests are permitted for the local HUD. Requests from non-loopback clients fail closed unless `JARVIS_API_TOKEN` is configured.
+- All `/api/*` routes are protected from non-loopback clients because they may expose local telemetry, tool metadata, memories, or agent actions.
+- Loopback requests are permitted for the local HUD. Requests to all `/api/*` routes from non-loopback clients fail closed unless `JARVIS_API_TOKEN` is configured.
 - For remote clients, set a strong random `JARVIS_API_TOKEN` in the server environment and send it as the `X-JARVIS-Token` request header. Never put the token in frontend JavaScript, a public repository, or a URL.
 - Set `JARVIS_ALLOWED_ORIGINS` to a comma-separated allowlist of exact trusted origins if a remote browser client is required. CORS is not authentication; keep network/firewall access restricted as well.
 - The bundled HUD is designed for local loopback use. Remote browser integration needs a secure token-forwarding design rather than embedding a secret in static files.
@@ -28,7 +28,7 @@ export JARVIS_ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
 python main.py
 ```
 
-When a token is configured, it protects sensitive endpoints for remote clients. Local loopback calls continue to work without the token so the local HUD remains usable.
+When a token is configured, it protects all API routes for remote clients. Local loopback calls continue to work without the token so the local HUD remains usable.
 
 ## Tests
 
