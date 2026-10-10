@@ -1,51 +1,90 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+"""Local JARVIS HUD API with safe defaults for remotely exposed deployments."""
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import os
-import sys
-import psutil
 import asyncio
+import hmac
+import os
+import psutil
+import sqlite3
+import sys
 
-# Add parent directory to path to allow importing sibling modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add parent directory to path to allow importing sibling modules.
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import config
 from brain.agent import JarvisAgent
 from brain.memory import JarvisMemory
 
 app = FastAPI(title="J.A.R.V.I.S. Swarm API")
 
-# Add CORS Middleware to allow cross-origin requests (e.g. from Vercel dashboard deployments)
+_DEFAULT_ORIGINS = (
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+)
+_allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("JARVIS_ALLOWED_ORIGINS", ",".join(_DEFAULT_ORIGINS)).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-JARVIS-Token", "Authorization"],
 )
 
-# Mount Static Files to serve the HUD frontend
+# Mount static HUD frontend.
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Shared state indicators
+# Routes that expose memory or trigger agent actions must not be remotely reachable
+# without a configured shared token. Loopback-only local use remains convenient.
+_SENSITIVE_PATHS = ("/api/command", "/api/memory")
+
+
 class SwarmState:
     audio_status = "standby"  # standby, listening, speaking, thinking
     swarm_actor_state = "standby"  # standby, orchestrating, coding, critiquing
     visual_buffer_ref = None
     agent_ref = None
 
-# Base Models
+
 class CommandRequest(BaseModel):
     command: str
 
+
+def _is_loopback(request: Request) -> bool:
+    host = request.client.host if request.client else ""
+    return host in {"127.0.0.1", "::1", "localhost", "testclient"}
+
+
+@app.middleware("http")
+async def protect_sensitive_routes(request: Request, call_next):
+    path = request.url.path
+    sensitive = path == "/api/command" or path == "/api/memory" or path.startswith("/api/memory/")
+    if sensitive and request.method in {"GET", "POST", "DELETE", "PUT", "PATCH"}:
+        expected = os.getenv("JARVIS_API_TOKEN", "").strip()
+        supplied = request.headers.get("X-JARVIS-Token", "")
+        if expected:
+            if not supplied or not hmac.compare_digest(supplied, expected):
+                from starlette.responses import JSONResponse
+                return JSONResponse(status_code=401, content={"detail": "Valid X-JARVIS-Token header required"})
+        elif not _is_loopback(request):
+            from starlette.responses import JSONResponse
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Remote access to this endpoint is disabled until JARVIS_API_TOKEN is configured"},
+            )
+    return await call_next(request)
+
+
 @app.get("/api/status")
 def get_status():
-    """Returns real-time hardware performance and swarm status telemetry."""
-    # Hardware Stats
-    cpu = psutil.cpu_percent()
-    ram = psutil.virtual_memory().percent
-    
+    """Returns hardware performance and swarm status telemetry."""
     battery_charge = 100
     power_plugged = True
     battery = psutil.sensors_battery()
@@ -53,125 +92,107 @@ def get_status():
         battery_charge = battery.percent
         power_plugged = battery.power_plugged
 
-    # Dynamic Custom Tools Count
     custom_tools_count = 0
     if SwarmState.agent_ref and SwarmState.agent_ref.custom_manager:
         custom_tools_count = len(SwarmState.agent_ref.custom_manager.custom_tools)
 
     return {
-        "cpu": cpu,
-        "ram": ram,
-        "battery": {
-            "charge": battery_charge,
-            "plugged": power_plugged
-        },
+        "cpu": psutil.cpu_percent(),
+        "ram": psutil.virtual_memory().percent,
+        "battery": {"charge": battery_charge, "plugged": power_plugged},
         "audio_status": SwarmState.audio_status,
         "swarm_state": SwarmState.swarm_actor_state,
-        "custom_tools_count": custom_tools_count
+        "custom_tools_count": custom_tools_count,
     }
+
 
 @app.get("/api/memory")
 def get_memories():
-    """Lists all memories stored in the SQLite database."""
+    """Lists memories stored in the SQLite database; route is access-controlled."""
     try:
-        memory = JarvisMemory()
-        conn = memory.sqlite3.connect(memory.db_path) if hasattr(memory, 'sqlite3') else None
-        # Let's import sqlite3 directly to guarantee execution
-        import sqlite3
-        conn = sqlite3.connect(config.DATABASE_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT key, value FROM memories")
-        rows = cursor.fetchall()
-        conn.close()
-        
-        mem_dict = {key: val for key, val in rows}
-        return {"memories": mem_dict}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        with sqlite3.connect(config.DATABASE_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value FROM memories")
+            rows = cursor.fetchall()
+        return {"memories": {key: value for key, value in rows}}
+    except sqlite3.Error:
+        # Avoid returning database paths, SQL details, or internal exceptions to clients.
+        raise HTTPException(status_code=500, detail="Memory store is unavailable")
+
 
 @app.delete("/api/memory/{key}")
 def delete_memory(key: str):
-    """Deletes a fact from long-term memory."""
+    """Deletes a fact from long-term memory; route is access-controlled."""
     try:
         memory = JarvisMemory()
-        res = memory.delete(key)
-        if "No memory key" in res:
-            raise HTTPException(status_code=404, detail=res)
-        return {"status": "success", "message": res}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        result = memory.delete(key)
+        if "No memory key" in result:
+            raise HTTPException(status_code=404, detail="Memory key not found")
+        return {"status": "success", "message": result}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Memory operation failed")
+
 
 @app.get("/api/tools")
 def get_tools():
     """Lists built-in and dynamically created custom tool schemas."""
     custom_tools = []
     if SwarmState.agent_ref and SwarmState.agent_ref.custom_manager:
-        schemas = SwarmState.agent_ref.custom_manager.get_tool_schemas()
-        for s in schemas:
-            func = s.get("function", {})
-            custom_tools.append({
-                "name": func.get("name"),
-                "description": func.get("description")
-            })
+        for schema in SwarmState.agent_ref.custom_manager.get_tool_schemas():
+            func = schema.get("function", {})
+            custom_tools.append({"name": func.get("name"), "description": func.get("description")})
     return {"custom_tools": custom_tools}
+
 
 @app.post("/api/command")
 async def execute_command(req: CommandRequest):
-    """Executes manual text commands through the Swarm agent."""
+    """Executes a manual text command through the Swarm agent; access-controlled."""
     if not SwarmState.agent_ref:
         raise HTTPException(status_code=503, detail="Agent engine is initializing...")
-        
-    cmd = req.command.strip()
-    if not cmd:
+
+    command = req.command.strip()
+    if not command:
         raise HTTPException(status_code=400, detail="Command cannot be empty")
 
-    # Get visual buffer context
     visual_context = None
     if SwarmState.visual_buffer_ref:
         visual_context = SwarmState.visual_buffer_ref.get_context_summary()
 
-    # 1. Update state to Thinking/Speaking
     SwarmState.audio_status = "thinking"
-    
-    # Track swarm state based on keywords
-    if "tool" in cmd.lower() or "create" in cmd.lower():
-        SwarmState.swarm_actor_state = "coding"
-    else:
-        SwarmState.swarm_actor_state = "orchestrating"
+    SwarmState.swarm_actor_state = "coding" if any(
+        word in command.lower() for word in ("tool", "create")
+    ) else "orchestrating"
 
-    # 2. Run agent chat
     try:
-        response_text = await SwarmState.agent_ref.chat(cmd, visual_context=visual_context)
-        
-        # Determine if speak synthesis should run (async background read-out simulation)
+        response_text = await SwarmState.agent_ref.chat(command, visual_context=visual_context)
         SwarmState.audio_status = "speaking"
-        
-        # Reset swarm states back to standby
         SwarmState.swarm_actor_state = "standby"
-        
-        # We spawn a background task to speak the text using pyttsx3/edge-tts without blocking the HTTP response
-        # Using a slight delay to allow client to transition state
         asyncio.create_task(speak_response_delayed(response_text))
-        
         return {"response": response_text}
-    except Exception as e:
+    except Exception:
         SwarmState.audio_status = "standby"
         SwarmState.swarm_actor_state = "standby"
-        raise HTTPException(status_code=500, detail=f"Engine execution failure: {e}")
+        # Do not leak agent prompts, local paths, or provider errors to API callers.
+        raise HTTPException(status_code=500, detail="Agent execution failed")
+
 
 async def speak_response_delayed(text: str):
-    """Speaks the response using speaker helper after a brief state delay."""
+    """Speaks a response using the configured speaker helper."""
     await asyncio.sleep(0.3)
-    from io_dev.audio_output import JarvisSpeaker
     try:
+        from io_dev.audio_output import JarvisSpeaker
         speaker = JarvisSpeaker()
         await speaker.speak(text)
     except Exception:
         pass
-    SwarmState.audio_status = "standby"
+    finally:
+        SwarmState.audio_status = "standby"
+
 
 @app.get("/")
 def read_root():
-    """Redirects to static HUD dashboard file."""
+    """Redirects to the static HUD dashboard file."""
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/static/index.html")
