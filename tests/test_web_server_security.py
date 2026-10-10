@@ -53,3 +53,11 @@ def test_cors_does_not_allow_arbitrary_origin():
         },
     )
     assert "access-control-allow-origin" not in response.headers
+
+
+
+def test_remote_status_route_also_requires_token(monkeypatch):
+    monkeypatch.delenv("JARVIS_API_TOKEN", raising=False)
+    client = TestClient(app, client=("203.0.113.7", 12345))
+    response = client.get("/api/status")
+    assert response.status_code == 503
