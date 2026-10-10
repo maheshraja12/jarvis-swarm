@@ -13,8 +13,6 @@ import sys
 # Add parent directory to path to allow importing sibling modules.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import config
-from brain.agent import JarvisAgent
-from brain.memory import JarvisMemory
 
 app = FastAPI(title="J.A.R.V.I.S. Swarm API")
 
@@ -124,6 +122,7 @@ def get_memories():
 def delete_memory(key: str):
     """Deletes a fact from long-term memory; route is access-controlled."""
     try:
+        from brain.memory import JarvisMemory
         memory = JarvisMemory()
         result = memory.delete(key)
         if "No memory key" in result:
