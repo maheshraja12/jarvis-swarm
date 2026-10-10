@@ -29,3 +29,11 @@ def test_remote_api_accepts_configured_token_for_route(monkeypatch):
     # The request passes the access-control middleware. The handler may return
     # 200 or a generic 500 when the local database has not been initialized.
     assert response.status_code not in (401, 503)
+
+
+def test_command_payload_is_bounded_before_agent_execution():
+    with TestClient(app) as client:
+        empty = client.post("/api/command", json={"command": ""})
+        oversized = client.post("/api/command", json={"command": "x" * 4001})
+    assert empty.status_code == 422
+    assert oversized.status_code == 422
