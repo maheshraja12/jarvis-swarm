@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import asyncio
 import hmac
 import os
@@ -52,7 +52,8 @@ class SwarmState:
 
 
 class CommandRequest(BaseModel):
-    command: str
+    # Bound user-controlled input before it reaches the agent/model layer.
+    command: str = Field(min_length=1, max_length=4000)
 
 
 def _is_loopback(request: Request) -> bool:
