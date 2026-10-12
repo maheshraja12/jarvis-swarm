@@ -34,3 +34,17 @@ def test_numeric_settings_are_configurable(monkeypatch):
     reloaded = importlib.reload(config)
     assert reloaded.PYTTSX3_RATE == 200
     assert reloaded.VISUAL_BUFFER_INTERVAL == 1
+
+
+
+def test_invalid_trigger_mode_fails_fast(monkeypatch):
+    monkeypatch.setenv("JARVIS_TRIGGER_MODE", "unsupported")
+    try:
+        importlib.reload(config)
+    except ValueError as exc:
+        assert "JARVIS_TRIGGER_MODE" in str(exc)
+    else:
+        raise AssertionError("Invalid trigger mode must be rejected")
+    finally:
+        monkeypatch.setenv("JARVIS_TRIGGER_MODE", "hybrid")
+        importlib.reload(config)
