@@ -28,4 +28,4 @@ jobs:
       - name: Check required configuration exists
         run: python -c "from pathlib import Path; assert Path('config.py').is_file(); assert Path('brain/agent.py').is_file(); assert Path('brain/web_server.py').is_file()"
       - name: Run safe unit tests
-        run: pytest -q tests
+        run: python -m pytest -q tests
