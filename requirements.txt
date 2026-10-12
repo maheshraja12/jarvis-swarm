@@ -14,3 +14,5 @@ standard-aifc>=3.13.0
 standard-chunk>=3.13.0
 fastapi>=0.110.0
 uvicorn>=0.28.0
+
+python-dotenv>=1.0,<2.0
