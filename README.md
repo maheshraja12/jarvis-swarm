@@ -30,6 +30,18 @@ python main.py
 
 When a token is configured, it protects all API routes for remote clients. Local loopback calls continue to work without the token so the local HUD remains usable.
 
+## Custom Python tools
+
+Dynamic custom tools are **disabled by default**. JARVIS currently imports custom Python modules into its own process; syntax compilation is not a sandbox, and imported code can access the same files, credentials, network, and operating-system permissions as JARVIS.
+
+Only if you have reviewed and trust every custom tool, you can explicitly opt in by setting:
+
+```sh
+export JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS=1
+```
+
+Restart JARVIS after changing the setting. Do not enable this option for untrusted model-generated code or on a machine holding sensitive credentials. A true security boundary requires a separate restricted process/container with filesystem, network, CPU, and memory controls; this repository does not yet provide that boundary.
+
 ## Tests
 
 Run the non-hardware-dependent test suite:
