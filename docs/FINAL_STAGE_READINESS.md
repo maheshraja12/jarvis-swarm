@@ -6,7 +6,8 @@ Deployment is intentionally excluded from this stage. The target is a reviewable
 
 - Main voice-loop entry point exists in `main.py`.
 - Dependencies include speech/audio, desktop automation, FastAPI, and Uvicorn packages.
-- A draft API-hardening PR exists: https://github.com/maheshraja12/jarvis-swarm/pull/1
+- API hardening is merged in PR #1; startup/configuration hardening is merged in PR #4.
+- Latest local-hardening CI passed: 22 tests, including compilation of the full Python tree: https://github.com/maheshraja12/jarvis-swarm/actions/runs/38261449986
 
 ## Required implementation gates
 
