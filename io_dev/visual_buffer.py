@@ -75,7 +75,8 @@ class JarvisVisualBuffer:
                     summary = f"User is looking at {win_info}."
                     if "empty" not in clipboard.lower() and len(clipboard) < 150:
                         # Append a snippet of the clipboard if relevant and short
-                        summary += f" Clipboard text contains: '{clipboard.replace('Clipboard Content:\n\"\"\"', '').replace('\"\"\"', '').strip()}'."
+                        cleaned_clipboard = clipboard.replace("Clipboard Content:" + chr(10) + '"""', "").replace('"""', "").strip()
+                        summary += f" Clipboard text contains: '{cleaned_clipboard}'."
                     
                     self.buffer.append({
                         "timestamp": time.time(),
