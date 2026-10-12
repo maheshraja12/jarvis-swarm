@@ -1,5 +1,9 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Central Configuration for JARVIS Swarm (v3.0)
 
 # Cloud credentials must be supplied through environment variables. Never commit
