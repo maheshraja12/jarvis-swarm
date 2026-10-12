@@ -1,0 +1,18 @@
+# Local secrets and environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime data and screenshots
+jarvis_memory.db*
+screenshots/
+custom_tools/custom_*.py
+custom_tools/tool_schemas.json
+
+# Logs
+*.log
