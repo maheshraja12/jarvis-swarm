@@ -1,0 +1,25 @@
+name: JARVIS configuration and security CI
+
+on:
+  push:
+    branches: ["hardening-final-readiness"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install pytest httpx fastapi psutil requests python-dotenv
+      - name: Compile Python modules
+        run: python -m compileall -q .
+      - name: Run regression tests
+        run: pytest -q tests
