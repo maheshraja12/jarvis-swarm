@@ -37,3 +37,11 @@ def test_command_payload_is_bounded_before_agent_execution():
         oversized = client.post("/api/command", json={"command": "x" * 4001})
     assert empty.status_code == 422
     assert oversized.status_code == 422
+
+
+
+def test_health_endpoint_is_available_without_sensitive_data():
+    with TestClient(app) as client:
+        response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
