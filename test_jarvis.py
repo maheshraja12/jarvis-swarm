@@ -113,37 +113,39 @@ class TestJarvisComponents(unittest.TestCase):
         self.assertIn("shows error code 404", summary)
 
     def test_dynamic_tool_hotloading(self):
-        """Tests compiling, saving, sandboxing and hot-loading a dynamically generated tool."""
-        tool_code = """
+        """Tests explicitly opted-in loading of trusted local test code (not a sandbox)."""
+        previous = os.environ.get("JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS")
+        os.environ["JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS"] = "1"
+        try:
+            tool_code = """
 def multiply_numbers(a: int, b: int) -> str:
     \"\"\"Multiplies two numbers together.\"\"\"
     return f"Product is {a * b}, sir."
 """
-        tool_schema = {
-            "type": "function",
-            "function": {
-                "name": "multiply_numbers",
-                "description": "Multiplies two numbers.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "a": {"type": "integer"},
-                        "b": {"type": "integer"}
-                    },
-                    "required": ["a", "b"]
+            tool_schema = {
+                "type": "function",
+                "function": {
+                    "name": "multiply_numbers",
+                    "description": "Multiplies two numbers.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "a": {"type": "integer"},
+                            "b": {"type": "integer"}
+                        },
+                        "required": ["a", "b"]
+                    }
                 }
             }
-        }
-        
-        # Register tool
-        reg_result = self.tool_manager.register_new_tool("multiply_numbers", tool_code, tool_schema)
-        self.assertIn("verified, sandboxed, and dynamically added", reg_result)
-        
-        # Test hotloaded tool call
-        self.assertIn("multiply_numbers", self.tool_manager.custom_tools)
-        func = self.tool_manager.custom_tools["multiply_numbers"]
-        res = func(a=6, b=7)
-        self.assertEqual(res, "Product is 42, sir.")
+            reg_result = self.tool_manager.register_new_tool("multiply_numbers", tool_code, tool_schema)
+            self.assertIn("syntax-checked and loaded", reg_result)
+            self.assertIn("multiply_numbers", self.tool_manager.custom_tools)
+            self.assertEqual(self.tool_manager.custom_tools["multiply_numbers"](a=6, b=7), "Product is 42, sir.")
+        finally:
+            if previous is None:
+                os.environ.pop("JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS", None)
+            else:
+                os.environ["JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS"] = previous
 
     def test_agent_graceful_fallback(self):
         """Tests that agent gracefully falls back to local brain when Ollama/Cloud are offline."""
