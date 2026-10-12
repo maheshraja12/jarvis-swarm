@@ -1,5 +1,7 @@
 # JARVIS Swarm
 
+[![JARVIS CI](https://github.com/maheshraja12/jarvis-swarm/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/maheshraja12/jarvis-swarm/actions/workflows/ci.yml)
+
 JARVIS is a local-first personal voice assistant with a FastAPI HUD, agent tools, and long-term memory.
 
 ## Run locally
