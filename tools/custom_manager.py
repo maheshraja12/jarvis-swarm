@@ -94,7 +94,7 @@ class CustomToolManager:
                 os.remove(filepath)
             except Exception:
                 pass
-            return f"Sandbox execution failed: {func_or_err}"
+            return f"Module loading failed: {func_or_err}"
 
         # 4. Save to memory registry
         self.custom_tools[tool_name] = func_or_err
