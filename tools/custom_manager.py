@@ -2,13 +2,19 @@ import os
 import sys
 import importlib.util
 import json
+import re
 
 # Add parent directory to path to allow importing config
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import config
 
 class CustomToolManager:
-    """Handles writing, sandboxing, and hot-loading dynamically created Python tools."""
+    """Manage optional custom Python tools; imported code runs with full process privileges."""
+
+    @staticmethod
+    def _unsafe_tools_enabled() -> bool:
+        """Return whether the operator explicitly opted into arbitrary Python execution."""
+        return os.getenv("JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS", "").strip().lower() in {"1", "true", "yes", "on"}
     
     def __init__(self, tools_dir=None):
         self.tools_dir = tools_dir or config.CUSTOM_TOOLS_DIR
@@ -18,7 +24,9 @@ class CustomToolManager:
         self.load_existing_tools()
 
     def load_existing_tools(self):
-        """Discovers and hot-loads all previously generated tools from the custom_tools directory."""
+        """Load reviewed custom modules only when unsafe Python execution is explicitly enabled."""
+        if not self._unsafe_tools_enabled():
+            return
         if not os.path.exists(self.schema_file):
             return
 
@@ -29,7 +37,14 @@ class CustomToolManager:
             print(f"[Tool Manager Warning] Could not read tool schemas file: {e}")
             return
 
+        if not isinstance(schemas, dict):
+            print("[Tool Manager Warning] Tool registry must be a JSON object.")
+            return
+
         for tool_name, schema in schemas.items():
+            if not isinstance(tool_name, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", tool_name):
+                print("[Tool Manager Warning] Skipping invalid custom tool name.")
+                continue
             filename = f"custom_{tool_name}.py"
             filepath = os.path.join(self.tools_dir, filename)
             
@@ -42,12 +57,21 @@ class CustomToolManager:
                     print(f"[Tool Manager Warning] Failed to load tool '{tool_name}': {func_or_err}")
 
     def register_new_tool(self, tool_name: str, code: str, schema: dict) -> str:
-        """Validates python code syntax, saves it to file, and hot-loads it."""
-        tool_name = tool_name.strip().lower()
+        """Register trusted operator-reviewed code; this is not a security sandbox."""
+        if not self._unsafe_tools_enabled():
+            return ("Custom Python tool execution is disabled by default because imported code runs "
+                    "with full JARVIS process privileges. Set JARVIS_ENABLE_UNSAFE_CUSTOM_TOOLS=1 "
+                    "only for code you have reviewed and trust.")
+
+        tool_name = (tool_name or "").strip().lower()
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", tool_name):
+            return "Invalid tool name. Use 1-64 lowercase letters, numbers, and underscores; start with a letter."
+        if not isinstance(code, str) or not isinstance(schema, dict):
+            return "Invalid tool definition: code must be text and schema must be an object."
         filename = f"custom_{tool_name}.py"
         filepath = os.path.join(self.tools_dir, filename)
 
-        # 1. Sandbox test: Validate syntax using compile()
+        # 1. Syntax check only. compile() does NOT sandbox or make Python code safe.
         try:
             compile(code, filepath, "exec")
         except SyntaxError as e:
@@ -92,7 +116,8 @@ class CustomToolManager:
         except Exception as e:
             print(f"[Tool Manager Warning] Could not save schema for '{tool_name}': {e}")
 
-        return f"Success! Tool '{tool_name}' has been verified, sandboxed, and dynamically added to my nervous system, sir."
+        return (f"Tool '{tool_name}' was syntax-checked and loaded. It executes with full JARVIS "
+                "process privileges; only use operator-reviewed, trusted code.")
 
     def get_tool_schemas(self) -> list:
         """Returns the list of Ollama schemas for all custom tools."""
@@ -107,7 +132,7 @@ class CustomToolManager:
             return []
 
     def _load_module(self, name: str, filepath: str):
-        """Helper to load a Python file dynamically and return the primary function."""
+        """Import trusted Python code (not sandboxed) and return its primary function."""
         module_name = f"custom_tools.custom_{name}"
         try:
             spec = importlib.util.spec_from_file_location(module_name, filepath)
