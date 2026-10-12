@@ -8,11 +8,13 @@ def search_files(filename: str, directory: str = None) -> str:
         # Default to user's home directory (Documents is a good sub-target, but home covers Desktop/Downloads too)
         directory = os.path.expanduser("~")
         
-    directory = os.path.abspath(directory)
-    if not os.path.exists(directory):
-        return f"Directory '{directory}' does not exist, sir."
-        
-    filename_query = filename.lower().strip()
+    directory = os.path.abspath(os.path.expanduser(directory))
+    if not os.path.isdir(directory):
+        return f"Directory '{directory}' does not exist or is not a directory, sir."
+
+    filename_query = (filename or "").lower().strip()
+    if not filename_query:
+        return "Please provide a filename or glob pattern to search for, sir."
     matches = []
     
     # Exclude system and giant directories to ensure fast results and prevent hangs
