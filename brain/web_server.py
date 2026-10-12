@@ -81,6 +81,12 @@ async def protect_sensitive_routes(request: Request, call_next):
     return await call_next(request)
 
 
+@app.get("/health")
+def health_check():
+    """Minimal liveness endpoint for local service supervision."""
+    return {"status": "ok"}
+
+
 @app.get("/api/status")
 def get_status():
     """Returns hardware performance and swarm status telemetry."""
