@@ -56,8 +56,8 @@ Restart JARVIS after changing the setting. Do not enable this option for untrust
 Run the non-hardware-dependent test suite:
 
 ```sh
-python -m pip install pytest httpx fastapi psutil requests
-pytest -q tests
+python -m pip install pytest httpx fastapi psutil requests python-dotenv
+python -m pytest -q tests
 ```
 
 CI compiles the Python modules and runs safe unit tests. A minimal `/health` endpoint is available for local supervision. This remains a **local desktop application**, not a cloud-hosted microphone/screen-control service; microphone, speakers, keyboard hooks, and desktop automation must be tested on the target computer. The scripts are deployment helpers, not proof that hardware-specific features work on every machine.
