@@ -155,12 +155,14 @@ def get_tools():
 @app.post("/api/command")
 async def execute_command(req: CommandRequest):
     """Executes a manual text command through the Swarm agent; access-controlled."""
-    if not SwarmState.agent_ref:
-        raise HTTPException(status_code=503, detail="Agent engine is initializing...")
-
+    # Reject whitespace-only commands before checking runtime readiness so clients
+    # receive a deterministic validation error even while the agent is starting.
     command = req.command.strip()
     if not command:
         raise HTTPException(status_code=400, detail="Command cannot be empty")
+
+    if not SwarmState.agent_ref:
+        raise HTTPException(status_code=503, detail="Agent engine is initializing...")
 
     visual_context = None
     if SwarmState.visual_buffer_ref:
