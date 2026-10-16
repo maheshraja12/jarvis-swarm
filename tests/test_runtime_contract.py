@@ -41,7 +41,7 @@ def test_command_payload_validation_happens_before_agent_access():
         empty = client.post("/api/command", json={"command": "   "})
         too_long = client.post("/api/command", json={"command": "x" * 4001})
 
-    assert empty.status_code == 422
+    assert empty.status_code == 400
     assert too_long.status_code == 422
 
 
